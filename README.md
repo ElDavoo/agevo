@@ -7,3 +7,5 @@ USE THIS REPO AT YOUR OWN RISK.
 Kernel config
 
 Wiki for infos
+
+Thanks to Roleo for the kernel sources! Unfortunately, he says they are not complete. Feel free to help!
