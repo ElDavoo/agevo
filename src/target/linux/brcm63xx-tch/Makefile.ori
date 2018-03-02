@@ -1,0 +1,57 @@
+
+# Copyright (C) 2006-2009 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+include $(TOPDIR)/rules.mk
+
+#chriskuo+note: for DUMP=1, rules.mk does not include .config
+ARCH:=arm
+BOARD:=brcm63xx-tch
+BOARDNAME:=Broadcom BCM63xx Technicolor
+#chriskuo+e
+CPU_TYPE:=cortex-a9
+CPU_SUBTYPE:=vfpv3
+FEATURES:=squashfs jffs2 usb atm pci pcmcia
+LINUX_VERSION:=3.4.11-rt19
+
+
+include $(INCLUDE_DIR)/target.mk
+
+DEFAULT_PACKAGES += kmod-switch gpioctl
+
+define Target/Description
+	Build firmware images for Broadcom based xDSL/routers
+	currently supports BCM6338, BCM6348 and BCM6358 based devices.
+	(e.g. Inventel Livebox, Siemens SE515, Neufbox 4)
+endef
+
+define Kernel/Configure
+	cp -f $(TOPDIR)/target/linux/brcm63xx-tch/config-3.4.11 $(LINUX_DIR)/arch/arm/defconfig
+	cp -f $(TOPDIR)/target/linux/brcm63xx-tch/config-3.4.11 $(LINUX_DIR)/.config
+	cp -f $(TOPDIR)/target/linux/brcm63xx-tch/config-3.4.11 $(LINUX_DIR)/.config.old
+
+	#ln -sf $(LINUX_DIR)/arch/arm/mach-bcm963xx-tch/include/mach $(LINUX_DIR)/arch/arm/include/generated/mach
+	ln -sf $(LINUX_DIR)/include/generated/autoconf.h $(LINUX_DIR)/include/linux/autoconf.h
+endef
+
+define Kernel/CompileModules
+	rm -f $(LINUX_DIR)/vmlinux $(LINUX_DIR)/System.map
+	@echo "==============Kernel CompileModules============"
+	@echo "TOPDIR=[$(TOPDIR)]"
+	##+$(MAKE) $(KERNEL_MAKEOPTS) modules
+	#+$(MAKE) -C $(TOPDIR)/extern/broadcom-bsp CC=$(TARGET_CC) PROFILE=VRV9510RWAC34-1-B-ASU modbuild
+endef
+
+define Kernel/CompileImage
+	rm -f $(TARGET_DIR)/init
+	echo "Hahaha!!!!!!!!!"
+	##+$(MAKE) $(KERNEL_MAKEOPTS) $(subst ",,$(KERNELNAME))
+	##")
+	##+$(MAKE) -C $(LINUX_DIR) PROFILE=963138GW BRCM_CHIP=63138 BLD_NAND=1 ARCH="arm"
+	#+$(MAKE) -C $(TOPDIR)/extern/broadcom-bsp CC=$(TARGET_CC) PROFILE=VRV9510RWAC34-1-B-ASU BLD_NAND=1 kernelbuild
+	#$(call Kernel/CopyImage)
+endef
+
+$(eval $(call BuildTarget))

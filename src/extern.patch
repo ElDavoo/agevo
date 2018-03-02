@@ -1,0 +1,72 @@
+diff -Naur extern.a/broadcom-bsp/bcmdrivers/opensource/char/rdpa_mw/impl1/Makefile extern.b/broadcom-bsp/bcmdrivers/opensource/char/rdpa_mw/impl1/Makefile
+--- extern.a/broadcom-bsp/bcmdrivers/opensource/char/rdpa_mw/impl1/Makefile	2017-11-11 01:01:52.000000000 +0100
++++ extern.b/broadcom-bsp/bcmdrivers/opensource/char/rdpa_mw/impl1/Makefile	2017-10-18 18:31:14.000000000 +0200
+@@ -39,6 +39,11 @@
+ 
+ EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/net/enet/shared
+ EXTRA_CFLAGS += -I$(INC_BDMF_PATH)/platform/$(RDPA_PLATFORM) -I$(INC_BRCMDRIVER_PUB_PATH)/$(BRCM_BOARD) -I$(INC_BRCMSHARED_PUB_PATH)/$(BRCM_BOARD)
++EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/char/rdpa_gpl/impl1/include
++EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/framework
++EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system
++EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system/linux
++EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system/linux/ce
+ EXTRA_CFLAGS += $(EXTRA_INCLUDES) $(EXTRA_CFLAGS_RDPA)
+ EXTRA_CFLAGS += -Werror -Wall
+ 
+diff -Naur extern.a/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmenet.c extern.b/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmenet.c
+--- extern.a/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmenet.c	2017-11-11 01:01:52.000000000 +0100
++++ extern.b/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmenet.c	2017-10-18 23:35:37.000000000 +0200
+@@ -442,7 +442,7 @@
+     BcmEnet_devctrl *pVnetDev0 = (BcmEnet_devctrl *) netdev_priv(vnet_dev[0]);
+     int phy_id, phy_conn;
+     char vethPortmap[MAX_NUM_OF_VPORTS];
+-    int npm = sizeof(vethPortmap)/sizeof(vethPortmap[0]);
++//    int npm = sizeof(vethPortmap)/sizeof(vethPortmap[0]);
+ 
+     char *phy_devName;
+     int unit = 0, physical_port = 0;
+@@ -461,8 +461,8 @@
+     sw_pmap[0] = consolidated_portmap & SW_PORTMAP_EXT_M;
+     sw_pmap[1] = consolidated_portmap & SW_PORTMAP_M;
+ #endif
+-    if (vport_cnt > MAX_NUM_OF_VPORTS
+-        || BpGetVethPortmap_tch(&npm, vethPortmap))
++    if (vport_cnt > MAX_NUM_OF_VPORTS)
++//        || BpGetVethPortmap_tch(&npm, vethPortmap))
+         return -1;
+ 
+     phys.lnk = 0;
+diff -Naur extern.a/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmsw.c extern.b/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmsw.c
+--- extern.a/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmsw.c	2017-11-11 01:01:52.000000000 +0100
++++ extern.b/broadcom-bsp/bcmdrivers/opensource/net/enet/impl5/bcmsw.c	2017-10-18 23:36:19.000000000 +0200
+@@ -449,11 +449,11 @@
+ #define REG_LED_FUNCTION_1  0x12
+ void extsw_led_init(void)
+ {
+-    unsigned short ledConfigOverride;
++/*    unsigned short ledConfigOverride;
+ 
+     if (BpGetExtSwLedCfg_tch(&ledConfigOverride) == BP_SUCCESS) {
+         extsw_wreg_wrap(PAGE_CONTROL, REG_LED_FUNCTION_1, &ledConfigOverride, sizeof(ledConfigOverride));
+-    }
++    } */
+ }
+ 
+ void extsw_init_config(void)
+diff -Naur extern.a/broadcom-bsp/bcmdrivers/opensource/net/wfd/impl1/Makefile extern.b/broadcom-bsp/bcmdrivers/opensource/net/wfd/impl1/Makefile
+--- extern.a/broadcom-bsp/bcmdrivers/opensource/net/wfd/impl1/Makefile	2017-11-11 01:01:52.000000000 +0100
++++ extern.b/broadcom-bsp/bcmdrivers/opensource/net/wfd/impl1/Makefile	2017-10-19 00:24:50.000000000 +0200
+@@ -48,7 +48,12 @@
+ EXTRA_INCLUDES  += -I$(INC_RDPA_PATH) -I$(INC_RDPA_PATH)/autogen \
+     -I$(INC_BDMF_PATH)/framework -I$(INC_BDMF_PATH)/system -I$(INC_BDMF_PATH)/system/$(CONFIG_SYSTEM) \
+     -I$(INC_BDMF_PATH)/shell -I$(INC_BDMF_PATH)/platform/$(RDPA_PLATFORM) \
+-    -I$(INC_BRCMSHARED_PUB_PATH)/bcm963xx -I$(INC_BRCMDRIVER_PUB_PATH)/bcm963xx -I$(BRCMDRIVERS_DIR)/opensource/net/enet/shared
++    -I$(INC_BRCMSHARED_PUB_PATH)/bcm963xx -I$(INC_BRCMDRIVER_PUB_PATH)/bcm963xx -I$(BRCMDRIVERS_DIR)/opensource/net/enet/shared \
++    -I$(BRCMDRIVERS_DIR)/broadcom/net/wl/impl22/main/src/include \
++    -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system \
++    -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system/linux \
++    -I$(BRCMDRIVERS_DIR)/opensource/char/bdmf/impl1/system/linux/ce \
++    -I$(BRCMDRIVERS_DIR)/opensource/char/rdpa_mw/impl1
+     
+ ifneq ($(strip $(CONFIG_BCM_WLAN)),)
+ EXTRA_CFLAGS += -I$(BRCMDRIVERS_DIR)/broadcom/net/wl/bcm9$(BRCM_CHIP)/include

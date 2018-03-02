@@ -1,0 +1,145 @@
+--- a/drivers/leds/ledtrig-netdev.c
++++ b/drivers/leds/ledtrig-netdev.c
+@@ -46,6 +46,8 @@
+  *   tx:   LED blinks on transmitted data
+  *   rx:   LED blinks on receive data
+  *
++ * traffic_div_fact - division factor to check rx/tx is checked
++ *
+  * Some suggestions:
+  *
+  *  Simple link status LED:
+@@ -85,6 +87,9 @@ struct led_netdev_data {
+ 
+ 	char device_name[MAX_NETDEVS][IFNAMSIZ];
+ 	unsigned interval;
++	unsigned traffic_div_fact;
++	unsigned traffic_upd_cntr;
++	unsigned traffic;
+ 	unsigned mode;
+ 	unsigned link_up;
+ 	unsigned last_activity;
+@@ -325,6 +330,46 @@ static ssize_t led_interval_store(struct
+ 
+ static DEVICE_ATTR(interval, 0644, led_interval_show, led_interval_store);
+ 
++static ssize_t led_traffic_div_fact_show(struct device *dev,
++				 struct device_attribute *attr, char *buf)
++{
++	struct led_classdev *led_cdev = dev_get_drvdata(dev);
++	struct led_netdev_data *trigger_data = led_cdev->trigger_data;
++
++	read_lock(&trigger_data->lock);
++	sprintf(buf, "%u\n", trigger_data->traffic_div_fact);
++	read_unlock(&trigger_data->lock);
++
++	return strlen(buf) + 1;
++}
++
++static ssize_t led_traffic_div_fact_store(struct device *dev,
++				  struct device_attribute *attr, const char *buf, size_t size)
++{
++	struct led_classdev *led_cdev = dev_get_drvdata(dev);
++	struct led_netdev_data *trigger_data = led_cdev->trigger_data;
++	int ret = -EINVAL;
++	char *after;
++	unsigned long value = simple_strtoul(buf, &after, 10);
++	size_t count = after - buf;
++
++	if (*after && isspace(*after))
++		count++;
++
++	/* impose some basic bounds on the traffic division factor */
++	if (count == size && value >= 1 && value <= 1000) {
++		write_lock(&trigger_data->lock);
++		trigger_data->traffic_div_fact = value;
++		trigger_data->traffic_upd_cntr = trigger_data->traffic_div_fact;
++		write_unlock(&trigger_data->lock);
++		ret = count;
++	}
++
++	return ret;
++}
++
++static DEVICE_ATTR(traffic_div_fact, 0644, led_traffic_div_fact_show, led_traffic_div_fact_store);
++
+ static int netdev_trig_notify(struct notifier_block *nb,
+ 			      unsigned long evt,
+ 			      void *dv)
+@@ -392,6 +437,9 @@ static void netdev_trig_timer(unsigned l
+ 		goto no_restart;
+ 	}
+ 
++	trigger_data->traffic_upd_cntr++;
++	if (trigger_data->traffic_upd_cntr >= trigger_data->traffic_div_fact) {
++		trigger_data->traffic_upd_cntr = 0;
+ 	new_activity = 0;
+ 	for (index = 0; index < MAX_NETDEVS; index++) {
+ 		if (trigger_data->net_dev[index] == NULL)
+@@ -400,6 +448,9 @@ static void netdev_trig_timer(unsigned l
+ 		new_activity +=
+ 			((trigger_data->mode & MODE_TX) ? dev_stats->tx_packets : 0) +
+ 			((trigger_data->mode & MODE_RX) ? dev_stats->rx_packets : 0);
++		}
++		trigger_data->traffic = (trigger_data->last_activity != new_activity);
++		trigger_data->last_activity = new_activity;
+ 	}
+ 
+ 	if (trigger_data->mode & MODE_LINK) {
+@@ -410,7 +461,7 @@ static void netdev_trig_timer(unsigned l
+ 		/* ON -> OFF on activity */
+ 		if (trigger_data->led_cdev->brightness == LED_OFF) {
+ 			led_set_brightness(trigger_data->led_cdev, LED_FULL);
+-		} else if (trigger_data->last_activity != new_activity) {
++		} else if (trigger_data->traffic) {
+ 			led_set_brightness(trigger_data->led_cdev, LED_OFF);
+ 		}
+ 	} else {
+@@ -419,12 +470,11 @@ static void netdev_trig_timer(unsigned l
+ 		/* OFF -> ON on activity */
+ 		if (trigger_data->led_cdev->brightness == LED_FULL) {
+ 			led_set_brightness(trigger_data->led_cdev, LED_OFF);
+-		} else if (trigger_data->last_activity != new_activity) {
++		} else if (trigger_data->traffic) {
+ 			led_set_brightness(trigger_data->led_cdev, LED_FULL);
+ 		}
+ 	}
+ 
+-	trigger_data->last_activity = new_activity;
+ 	mod_timer(&trigger_data->timer, jiffies + trigger_data->interval);
+ 
+ no_restart:
+@@ -449,6 +499,9 @@ static void netdev_trig_activate(struct
+ 
+ 	trigger_data->led_cdev = led_cdev;
+ 	trigger_data->interval = msecs_to_jiffies(50);
++	trigger_data->traffic_div_fact = 10;
++	trigger_data->traffic = 0;
++	trigger_data->traffic_upd_cntr = trigger_data->traffic_div_fact;
+ 
+ 	led_cdev->trigger_data = trigger_data;
+ 
+@@ -461,10 +514,15 @@ static void netdev_trig_activate(struct
+ 	rc = device_create_file(led_cdev->dev, &dev_attr_interval);
+ 	if (rc)
+ 		goto err_out_mode;
++	rc = device_create_file(led_cdev->dev, &dev_attr_traffic_div_fact);
++	if (rc)
++		goto err_out_interval;
+ 
+ 	register_netdevice_notifier(&trigger_data->notifier);
+ 	return;
+ 
++err_out_interval:
++	device_remove_file(led_cdev->dev, &dev_attr_interval);
+ err_out_mode:
+ 	device_remove_file(led_cdev->dev, &dev_attr_mode);
+ err_out_device_name:
+@@ -485,6 +543,7 @@ static void netdev_trig_deactivate(struc
+ 		device_remove_file(led_cdev->dev, &dev_attr_device_name);
+ 		device_remove_file(led_cdev->dev, &dev_attr_mode);
+ 		device_remove_file(led_cdev->dev, &dev_attr_interval);
++		device_remove_file(led_cdev->dev, &dev_attr_traffic_div_fact);
+ 
+ 		write_lock(&trigger_data->lock);
+ 

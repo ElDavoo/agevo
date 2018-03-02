@@ -1,0 +1,1 @@
+cmd_/home/user/openwrt.ok/extern/broadcom-bsp/bcmdrivers/broadcom/char/vlan/bcm963138/bcmvlan.o := arm-openwrt-linux-uclibcgnueabi-ld -EL    -r -o /home/user/openwrt.ok/extern/broadcom-bsp/bcmdrivers/broadcom/char/vlan/bcm963138/bcmvlan.o /home/user/openwrt.ok/extern/broadcom-bsp/bcmdrivers/broadcom/char/vlan/bcm963138/bcmvlan_dep.o 

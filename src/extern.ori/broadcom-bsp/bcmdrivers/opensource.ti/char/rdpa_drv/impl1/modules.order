@@ -1,0 +1,4 @@
+kernel//home/user/openwrt_prova/extern/broadcom-bsp/bcmdrivers/opensource/char/rdpa_drv/bcm963138/rdpa_cmd_drv.ko
+kernel//home/user/openwrt_prova/extern/broadcom-bsp/bcmdrivers/opensource/char/rdpa_drv/bcm963138/rdpa_cmd_tm.ko
+kernel//home/user/openwrt_prova/extern/broadcom-bsp/bcmdrivers/opensource/char/rdpa_drv/bcm963138/rdpa_cmd_ds_wan_udp_filter.ko
+kernel//home/user/openwrt_prova/extern/broadcom-bsp/bcmdrivers/opensource/char/rdpa_drv/bcm963138/rdpa_cmd_spdsvc.ko

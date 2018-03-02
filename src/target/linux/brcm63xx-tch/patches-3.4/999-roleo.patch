@@ -1,0 +1,62 @@
+diff -Naur a/arch/arm/mach-bcm963xx/softdsl/AdslCoreDefs.h b/arch/arm/mach-bcm963xx/softdsl/AdslCoreDefs.h
+--- a/arch/arm/mach-bcm963xx/softdsl/AdslCoreDefs.h	1970-01-01 01:00:00.000000000 +0100
++++ b/arch/arm/mach-bcm963xx/softdsl/AdslCoreDefs.h	2017-05-12 04:01:34.000000000 +0200
+@@ -0,0 +1,31 @@
++#if defined(CONFIG_BCM96368)
++#define ADSL_PHY_SDRAM_BIAS 0x0CE000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#elif defined(CONFIG_BCM96362)
++#define ADSL_PHY_SDRAM_BIAS 0x100000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#elif defined(CONFIG_BCM96328)
++#define ADSL_PHY_SDRAM_BIAS 0x100000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#elif defined(CONFIG_BCM963268)
++#if defined(SUPPORT_DSL_BONDING)
++#define ADSL_PHY_SDRAM_BIAS 0x080000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#else
++#define ADSL_PHY_SDRAM_BIAS 0x0CE000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#endif
++#elif defined(CONFIG_BCM963381)
++#define ADSL_PHY_SDRAM_BIAS 0x0CE000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#elif defined(CONFIG_BCM963138)
++#define ADSL_PHY_SDRAM_BIAS 0x010000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#elif defined(CONFIG_BCM963148)
++#define ADSL_PHY_SDRAM_BIAS 0x080000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#else
++#define ADSL_PHY_SDRAM_BIAS 0x100000
++#define ADSL_PHY_SDRAM_PAGE_SIZE 0x200000
++#endif
++#define ADSL_SDRAM_IMAGE_SIZE (ADSL_PHY_SDRAM_PAGE_SIZE - ADSL_PHY_SDRAM_BIAS)
+diff -Naur a/drivers/mtd/brcmnand/Makefile b/drivers/mtd/brcmnand/Makefile
+--- a/drivers/mtd/brcmnand/Makefile	2016-11-23 10:57:38.000000000 +0100
++++ b/drivers/mtd/brcmnand/Makefile	2017-10-31 13:01:28.000000000 +0100
+@@ -5,5 +5,9 @@
+ obj-$(CONFIG_MTD_BRCMNAND)		+=  bcm63xx-nand.o brcmnand_base.o brcmnand_bbt.o
+ ## obj-$(CONFIG_MTD_BRCMNAND_EDU)		+= edu.o
+ obj-$(CONFIG_MTD_BRCMNAND_CORRECTABLE_ERR_HANDLING)	+= brcmnand_cet.o
+-EXTRA_CFLAGS	+= -I $(TOPDIR)/include/asm-generic -I$(INC_BRCMDRIVER_PUB_PATH)/$(BRCM_BOARD) -I$(INC_BRCMSHARED_PUB_PATH)/$(BRCM_BOARD)
++EXTRA_CFLAGS	+= -I $(TOPDIR)/include/asm-generic \
++        -I$(INC_BRCMDRIVER_PUB_PATH)/$(BRCM_BOARD) \
++        -I$(INC_BRCMSHARED_PUB_PATH)/$(BRCM_BOARD) \
++        -Wno-error=maybe-uninitialized
++
+ 
+diff -Naur a/Makefile b/Makefile
+--- a/Makefile	2016-11-23 10:57:38.000000000 +0100
++++ b/Makefile	2017-10-31 23:19:23.482631021 +0100
+@@ -372,7 +372,8 @@
+ LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
+                    -Iarch/$(hdr-arch)/include/generated -Iinclude \
+                    $(if $(KBUILD_SRC), -I$(srctree)/include) \
+-                   -include $(srctree)/include/linux/kconfig.h
++                   -include $(srctree)/include/linux/kconfig.h \
++                   $(ADD_LINUX_INCLUDE)
+ 
+ KBUILD_CPPFLAGS := -D__KERNEL__
+ 

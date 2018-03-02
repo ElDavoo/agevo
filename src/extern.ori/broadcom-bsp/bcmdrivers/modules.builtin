@@ -1,0 +1,2 @@
+kernel//home/user/openwrt.ok/extern/broadcom-bsp/bcmdrivers/broadcom/char/bpm/bcm963138/bcm_bpm.ko
+kernel//home/user/openwrt.ok/extern/broadcom-bsp/bcmdrivers/opensource/char/serial/bcm963138/bcm63xx_cons.ko
